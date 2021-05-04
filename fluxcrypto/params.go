@@ -1,4 +1,4 @@
-package zelcrypto
+package fluxcrypto
 
 type NetworkId [2]byte
 type Prefix [1]byte

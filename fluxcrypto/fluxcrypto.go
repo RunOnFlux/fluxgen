@@ -1,27 +1,27 @@
-// Standalone library to generate Zelcash addresses
-package zelcrypto
+// Standalone library to generate Flux addresses
+package fluxcrypto
 
 import (
 	"encoding/hex"
 	"fmt"
 	"strings"
 
-	"github.com/TheTrunk/mneumonic"
-	"github.com/TheTrunk/zelgen/base58"
+	"github.com/RunOnFlux/mneumonic"
+	"github.com/RunOnFlux/fluxgen/base58"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcutil/hdkeychain"
 	"github.com/btcsuite/golangcrypto/ripemd160"
 )
 
-type ZelWallet struct {
+type FluxWallet struct {
 	Passphrase string         `json:"passphrase"`
 	HexSeed    string         `json:"hexSeed"`
-	Addresses  []ZelAddress `json:"addresses"`
+	Addresses  []FluxAddress `json:"addresses"`
 	RequestId  string         `json:"requestId"`
 }
 
-type ZelAddress struct {
+type FluxAddress struct {
 	Value      string `json:"value"`
 	PublicKey  string `json:"publicKey"`
 	PrivateKey string `json:"privateKey"`
@@ -68,8 +68,8 @@ func getExtendedKeyFromPassphrase(mainnet bool, passphrase string) (*hdkeychain.
 	return extAcct0, nil
 }
 
-func getAddressFromPassphrase(mainnet bool, passphrase string, position uint32) (ZelAddress, error) {
-	var returnValue ZelAddress
+func getAddressFromPassphrase(mainnet bool, passphrase string, position uint32) (FluxAddress, error) {
+	var returnValue FluxAddress
 	var networkId NetworkId
 	var networkCfg chaincfg.Params
 
@@ -122,8 +122,8 @@ func getAddressFromPassphrase(mainnet bool, passphrase string, position uint32) 
 	return returnValue, nil
 }
 
-func CreateWallet(mainnet bool, numberOfAddressesToGenerate int) (ZelWallet, error) {
-	var wallet ZelWallet
+func CreateWallet(mainnet bool, numberOfAddressesToGenerate int) (FluxWallet, error) {
+	var wallet FluxWallet
 	var numAddresses int
 	var networkId NetworkId
 	var networkCfg chaincfg.Params
@@ -157,7 +157,7 @@ func CreateWallet(mainnet bool, numberOfAddressesToGenerate int) (ZelWallet, err
 
 	// Derive extended key (repeat this from 0 to number of addresses-1)
 	for i := 0; i <= numAddresses-1; i++ {
-		var address ZelAddress
+		var address FluxAddress
 
 		key, err := extendedKey.Child(uint32(i))
 		if err != nil {
@@ -196,9 +196,9 @@ func CreateWallet(mainnet bool, numberOfAddressesToGenerate int) (ZelWallet, err
 	return wallet, nil
 }
 
-func GetWalletFromPassphrase(mainnet bool, passphrase string, position uint32) (ZelWallet, error) {
-	var result ZelWallet
-	var address ZelAddress
+func GetWalletFromPassphrase(mainnet bool, passphrase string, position uint32) (FluxWallet, error) {
+	var result FluxWallet
+	var address FluxAddress
 
 	address, err := getAddressFromPassphrase(mainnet, passphrase, position)
 

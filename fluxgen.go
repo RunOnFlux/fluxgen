@@ -7,20 +7,20 @@ import (
 	"bufio"
 	"os"
 
-	"github.com/TheTrunk/zelgen/zelcrypto"
+	"github.com/RunOnFlux/fluxgen/fluxcrypto"
 )
 
 func main() {
-	//	var networkId zelcrypto.NetworkId
+	//	var networkId fluxcrypto.NetworkId
 	boolPtr := flag.Bool("test", false, "generate a testnet wallet")
 	nPtr := flag.Int("n", 1, "Number of addresses to generate up to 100")
-	boolPtr3 := flag.Bool("o", false, "enable output to file outputzelgen.txt")
+	boolPtr3 := flag.Bool("o", false, "enable output to file outputfluxgen.txt")
 	flag.Parse()
 
 	var output bool = *boolPtr3
 
 	// Generate the wallet
-	wallet, err := zelcrypto.CreateWallet(!(*boolPtr), *nPtr)
+	wallet, err := fluxcrypto.CreateWallet(!(*boolPtr), *nPtr)
 
 	if err != nil {
 		log.Panicln(err.Error())
@@ -30,7 +30,7 @@ func main() {
 	fmt.Println("Passphrase:", wallet.Passphrase)
 	fmt.Println("Address\t\t\t\tPrivate key")
 
-		file, err := os.OpenFile("outputzelgen.txt", os.O_WRONLY|os.O_CREATE, 0666)
+		file, err := os.OpenFile("outputfluxgen.txt", os.O_WRONLY|os.O_CREATE, 0666)
 		if err != nil && output == true {
         fmt.Println("File does not exists or cannot be created")
         os.Exit(1)

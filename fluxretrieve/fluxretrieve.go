@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"bufio"
 
-	"github.com/TheTrunk/zelgen/zelcrypto"
+	"github.com/RunOnFlux/fluxgen/fluxcrypto"
 )
 
 func main() {
@@ -20,7 +20,7 @@ func main() {
 	nPtr := flag.Int("n", 1, "Number of addresses to retrieve")
 	strPtr2 := flag.String("match", "", "generate addresses infinitely until a regex match is made to an address")
 	boolPtr2 := flag.Bool("i", false, "case insensitive regex match")
-	boolPtr3 := flag.Bool("o", false, "enable output to file outputzelretrieve.txt")
+	boolPtr3 := flag.Bool("o", false, "enable output to file outputfluxretrieve.txt")
 
 	flag.Parse()
 	var passphrase string = *strPtr
@@ -59,7 +59,7 @@ func main() {
 		}
 	}
 
-	file, err := os.OpenFile("outputzelretrieve.txt", os.O_WRONLY|os.O_CREATE, 0666)
+	file, err := os.OpenFile("outputfluxretrieve.txt", os.O_WRONLY|os.O_CREATE, 0666)
 		if err != nil && output == true {
         fmt.Println("File does not exists or cannot be created")
         os.Exit(1)
@@ -79,7 +79,7 @@ func main() {
 
 	for i = 0; i <= numAddresses-1; i++ {
 
-		wallet, err := zelcrypto.GetWalletFromPassphrase(!test, passphrase, uint32(i))
+		wallet, err := fluxcrypto.GetWalletFromPassphrase(!test, passphrase, uint32(i))
 
 
 		if err != nil {
