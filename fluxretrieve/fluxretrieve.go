@@ -2,28 +2,28 @@
 package main
 
 import (
+	"bufio"
 	"flag"
+	"fmt"
 	"log"
 	"math"
-	"regexp"
 	"os"
+	"regexp"
 	"time"
-	"fmt"
-	"bufio"
 
 	"github.com/RunOnFlux/fluxgen/fluxcrypto"
 )
 
 func main() {
 	boolPtr := flag.Bool("test", false, "generate a testnet wallet")
-	strPtr := flag.String("passphrase", "", "Passphrase for the wallet is REQUIRED between 128 and 512 bits")
+	strPtr := flag.String("mnemonic", "", "Mnemonic for the wallet is REQUIRED between 128 and 512 bits")
 	nPtr := flag.Int("n", 1, "Number of addresses to retrieve")
 	strPtr2 := flag.String("match", "", "generate addresses infinitely until a regex match is made to an address")
 	boolPtr2 := flag.Bool("i", false, "case insensitive regex match")
 	boolPtr3 := flag.Bool("o", false, "enable output to file outputfluxretrieve.txt")
 
 	flag.Parse()
-	var passphrase string = *strPtr
+	var mnemonic string = *strPtr
 	var test bool = *boolPtr
 	var numAddresses uint32
 	var match string = *strPtr2
@@ -31,12 +31,12 @@ func main() {
 	var numGenerate int = int(*nPtr)
 	var output bool = *boolPtr3
 
-	if passphrase == "" {
-		log.Fatalln("Passphrase must be specified")
+	if mnemonic == "" {
+		log.Fatalln("Mnemonic must be specified")
 	}
 
 	log.Println("Wallet retrieved")
-	fmt.Println("Passphrase:", passphrase)
+	fmt.Println("Mnemonic:", mnemonic)
 	// Try up to max number represented in an unsigned 32 bit integer
 	var reg *regexp.Regexp
 	if match != "" {
@@ -60,15 +60,15 @@ func main() {
 	}
 
 	file, err := os.OpenFile("outputfluxretrieve.txt", os.O_WRONLY|os.O_CREATE, 0666)
-		if err != nil && output == true {
-        fmt.Println("File does not exists or cannot be created")
-        os.Exit(1)
-		}
+	if err != nil && output == true {
+		fmt.Println("File does not exists or cannot be created")
+		os.Exit(1)
+	}
 	w := bufio.NewWriter(file)
 	if output == true {
-	fmt.Fprintln(w,"Passphrase:", passphrase)
-	fmt.Fprintln(w,"Address\t\t\t\t\t\t\t\tPrivate key")
-	w.Flush()
+		fmt.Fprintln(w, "Mnemonic:", mnemonic)
+		fmt.Fprintln(w, "Address\t\t\t\t\t\t\t\tPrivate key")
+		w.Flush()
 	}
 
 	fmt.Println("Address\t\t\t\t\tPrivate key")
@@ -79,8 +79,7 @@ func main() {
 
 	for i = 0; i <= numAddresses-1; i++ {
 
-		wallet, err := fluxcrypto.GetWalletFromPassphrase(!test, passphrase, uint32(i))
-
+		wallet, err := fluxcrypto.GetWalletFromMnemonic(!test, mnemonic, uint32(i))
 
 		if err != nil {
 			log.Panicln(err.Error())
@@ -89,32 +88,32 @@ func main() {
 		if match != "" {
 			if reg.MatchString(wallet.Addresses[0].Value) == true {
 				fmt.Println(wallet.Addresses[0].Value, wallet.Addresses[0].PrivateKey)
-					if output == true {
-				fmt.Fprintln(w,wallet.Addresses[0].Value, wallet.Addresses[0].PrivateKey)
-				w.Flush()
+				if output == true {
+					fmt.Fprintln(w, wallet.Addresses[0].Value, wallet.Addresses[0].PrivateKey)
+					w.Flush()
 				}
 				a++
 			}
 
-		} else {		
+		} else {
 			fmt.Println(wallet.Addresses[0].Value, wallet.Addresses[0].PrivateKey)
-				if output == true {
-			fmt.Fprintln(w,wallet.Addresses[0].Value, wallet.Addresses[0].PrivateKey)
-			w.Flush()
+			if output == true {
+				fmt.Fprintln(w, wallet.Addresses[0].Value, wallet.Addresses[0].PrivateKey)
+				w.Flush()
 			}
 			a++
 		}
 
 		if a == numGenerate {
-		os.Exit(1)
+			os.Exit(1)
 		}
 
 		elapsed := time.Since(start)
 		totalelapsed := elapsed.Seconds()
 
-		if i%20000 == 0 && i!=0 {
-		b:= int64((float64(i)/totalelapsed))
-			fmt.Println("Tested:", i, " Running for:",elapsed, " Sol/s:",b)
+		if i%20000 == 0 && i != 0 {
+			b := int64((float64(i) / totalelapsed))
+			fmt.Println("Tested:", i, " Running for:", elapsed, " Sol/s:", b)
 		}
 
 	}

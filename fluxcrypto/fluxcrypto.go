@@ -4,21 +4,20 @@ package fluxcrypto
 import (
 	"encoding/hex"
 	"fmt"
-	"strings"
 
-	"github.com/RunOnFlux/mneumonic"
 	"github.com/RunOnFlux/fluxgen/base58"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcutil/hdkeychain"
 	"github.com/btcsuite/golangcrypto/ripemd160"
+	"github.com/tyler-smith/go-bip39"
 )
 
 type FluxWallet struct {
-	Passphrase string         `json:"passphrase"`
-	HexSeed    string         `json:"hexSeed"`
-	Addresses  []FluxAddress `json:"addresses"`
-	RequestId  string         `json:"requestId"`
+	Mnemonic  string        `json:"mnemonic"`
+	HexSeed   string        `json:"hexSeed"`
+	Addresses []FluxAddress `json:"addresses"`
+	RequestId string        `json:"requestId"`
 }
 
 type FluxAddress struct {
@@ -27,7 +26,7 @@ type FluxAddress struct {
 	PrivateKey string `json:"privateKey"`
 }
 
-func getExtendedKeyFromPassphrase(mainnet bool, passphrase string) (*hdkeychain.ExtendedKey, error) {
+func getExtendedKeyFromMnemonic(mainnet bool, mnemonicWords string) (*hdkeychain.ExtendedKey, error) {
 	var networkCfg chaincfg.Params
 
 	// Switch depending on mainnet or testnet
@@ -38,8 +37,8 @@ func getExtendedKeyFromPassphrase(mainnet bool, passphrase string) (*hdkeychain.
 		networkCfg = chaincfg.TestNet3Params
 	}
 
-	m := mneumonic.FromWords(strings.Split(passphrase, " "))
-	hexSeed := m.ToHex()
+	seed := bip39.NewSeed(mnemonicWords, "")
+	hexSeed := hex.EncodeToString(seed)
 
 	hexValue, err := hex.DecodeString(hexSeed)
 
@@ -54,13 +53,13 @@ func getExtendedKeyFromPassphrase(mainnet bool, passphrase string) (*hdkeychain.
 
 	// get m/0'/0/0
 	// Hardened key for account 0. ie 0'
-	acct0, err := masterKey.Child(hdkeychain.HardenedKeyStart + 0)
+	acct0, err := masterKey.Derive(hdkeychain.HardenedKeyStart + 0)
 	if err != nil {
 		return nil, err
 	}
 
 	// External account for 0'
-	extAcct0, err := acct0.Child(0)
+	extAcct0, err := acct0.Derive(0)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +67,7 @@ func getExtendedKeyFromPassphrase(mainnet bool, passphrase string) (*hdkeychain.
 	return extAcct0, nil
 }
 
-func getAddressFromPassphrase(mainnet bool, passphrase string, position uint32) (FluxAddress, error) {
+func getAddressFromMnemonic(mainnet bool, mnemonicWords string, position uint32) (FluxAddress, error) {
 	var returnValue FluxAddress
 	var networkId NetworkId
 	var networkCfg chaincfg.Params
@@ -83,12 +82,12 @@ func getAddressFromPassphrase(mainnet bool, passphrase string, position uint32) 
 		networkCfg = chaincfg.TestNet3Params
 	}
 
-	extendedKey, err := getExtendedKeyFromPassphrase(mainnet, passphrase)
+	extendedKey, err := getExtendedKeyFromMnemonic(mainnet, mnemonicWords)
 	if err != nil {
 		return returnValue, err
 	}
 
-	key, err := extendedKey.Child(uint32(position))
+	key, err := extendedKey.Derive(uint32(position))
 	if err != nil {
 		return returnValue, err
 	}
@@ -146,11 +145,22 @@ func CreateWallet(mainnet bool, numberOfAddressesToGenerate int) (FluxWallet, er
 		numAddresses = numberOfAddressesToGenerate
 	}
 
-	m := mneumonic.GenerateRandom(128)
-	wallet.Passphrase = strings.Join(m.ToWords(), " ")
-	wallet.HexSeed = m.ToHex()
+	entropy, err := bip39.NewEntropy(128)
+	if err != nil {
+		return wallet, err
+	}
 
-	extendedKey, err := getExtendedKeyFromPassphrase(mainnet, wallet.Passphrase)
+	m, err := bip39.NewMnemonic(entropy)
+	if err != nil {
+		return wallet, err
+	}
+
+	seed := bip39.NewSeed(m, "")
+
+	wallet.Mnemonic = m
+	wallet.HexSeed = hex.EncodeToString(seed)
+
+	extendedKey, err := getExtendedKeyFromMnemonic(mainnet, wallet.Mnemonic)
 	if err != nil {
 		return wallet, err
 	}
@@ -159,7 +169,7 @@ func CreateWallet(mainnet bool, numberOfAddressesToGenerate int) (FluxWallet, er
 	for i := 0; i <= numAddresses-1; i++ {
 		var address FluxAddress
 
-		key, err := extendedKey.Child(uint32(i))
+		key, err := extendedKey.Derive(uint32(i))
 		if err != nil {
 			return wallet, err
 		}
@@ -196,17 +206,17 @@ func CreateWallet(mainnet bool, numberOfAddressesToGenerate int) (FluxWallet, er
 	return wallet, nil
 }
 
-func GetWalletFromPassphrase(mainnet bool, passphrase string, position uint32) (FluxWallet, error) {
+func GetWalletFromMnemonic(mainnet bool, mnemonicWords string, position uint32) (FluxWallet, error) {
 	var result FluxWallet
 	var address FluxAddress
 
-	address, err := getAddressFromPassphrase(mainnet, passphrase, position)
+	address, err := getAddressFromMnemonic(mainnet, mnemonicWords, position)
 
 	if err != nil {
 		return result, err
 	}
 
-	result.Passphrase = passphrase
+	result.Mnemonic = mnemonicWords
 	result.Addresses = append(result.Addresses, address)
 
 	return result, nil

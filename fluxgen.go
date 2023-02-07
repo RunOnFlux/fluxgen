@@ -1,10 +1,10 @@
 package main
 
 import (
-	"flag"
-	"log"
-	"fmt"
 	"bufio"
+	"flag"
+	"fmt"
+	"log"
 	"os"
 
 	"github.com/RunOnFlux/fluxgen/fluxcrypto"
@@ -27,26 +27,29 @@ func main() {
 	}
 
 	log.Println("Wallet generated!")
-	fmt.Println("Passphrase:", wallet.Passphrase)
+	fmt.Println("Mnemonic:", wallet.Mnemonic)
 	fmt.Println("Address\t\t\t\tPrivate key")
 
-		file, err := os.OpenFile("outputfluxgen.txt", os.O_WRONLY|os.O_CREATE, 0666)
-		if err != nil && output == true {
-        fmt.Println("File does not exists or cannot be created")
-        os.Exit(1)
-		}
+	file, err := os.OpenFile("outputfluxgen.txt", os.O_WRONLY|os.O_CREATE, 0666)
+
+	if err != nil && output {
+		fmt.Println("File does not exists or cannot be created")
+		os.Exit(1)
+	}
+
 	w := bufio.NewWriter(file)
-	if output == true {
-	fmt.Fprintln(w,"Passphrase:", wallet.Passphrase)
-	fmt.Fprintln(w,"Address\t\t\t\t\t\t\t\tPrivate key")
-	w.Flush()
+
+	if output {
+		fmt.Fprintln(w, "Mnemonic:", wallet.Mnemonic)
+		fmt.Fprintln(w, "Address\t\t\t\t\t\t\t\tPrivate key")
+		w.Flush()
 	}
 
 	for i := 0; i <= len(wallet.Addresses)-1; i++ {
 		fmt.Println(wallet.Addresses[i].Value, wallet.Addresses[i].PrivateKey)
-			if output == true {
-				fmt.Fprintln(w,wallet.Addresses[i].Value, wallet.Addresses[i].PrivateKey)
-				w.Flush()
-			}
+		if output {
+			fmt.Fprintln(w, wallet.Addresses[i].Value, wallet.Addresses[i].PrivateKey)
+			w.Flush()
+		}
 	}
 }
